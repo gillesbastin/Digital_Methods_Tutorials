@@ -2,7 +2,7 @@
 title: "Europresse_to_Dataframe"
 author: "Gilles Bastin"
 date: "2024-10-21"
-output: html_document
+output: github_document
 ---
 
 # Objectif et prérequis
@@ -176,7 +176,7 @@ lire_dossier <- function(chemin) {
 Cette fonction va donc appliquer la fonction LIRE qui transforme les HTML en base de données sur tous les documents qui ont une extension .HTML dans un dossier déterminé. Cela tombe bien puisque l'on on a mis tous nos documents dans un même dossier. On n’a donc qu’à appliquer cette fonction à ce dossier puis créer un .csv dans ce dossier afin de sauvegarder le data frame.
 
 ```{r}
-df <- lire_dossier("/Users/basting/Downloads")
+df <- lire_dossier("data/Europresse_deputes")
 ```
 
 ```{r}
