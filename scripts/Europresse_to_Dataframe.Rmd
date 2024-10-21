@@ -1,0 +1,503 @@
+---
+title: "Europresse_to_Dataframe"
+author: "Gilles Bastin"
+date: "2024-10-21"
+output: html_document
+---
+
+# Objectif et prérequis
+
+## Objectif
+
+L’objectif est de constituer une base de données d’articles de presse exploitable avec des outils standards de *text mining* à partir de la plateforme Europresse (https://nouveau-europresse-com).
+Ce type de plateformes documentaires est conçu pour permettre de retrouver un article ou de constituer de petits corpus "à la main". Afin de l'utiliser pour constituer un corpus plus important pouvant donner lieu à une analyse de type text mining ou statistique lexicale il faut passer par plusieurs étapes de traitement de données qui sont décrites dans ce tutoriel.
+
+## Prérequis
+
+Ce fichier est un script R au format .Rmd (R Markdown). Vous pouvez le lire avec n'importe quel éditeur de texte mais si vous l'ouvrez avec RStudio vous pourrez exécuter le code contenu dans les « chunks » (morceaux de code) signalés entre ```{r} ```. Pour cela vous devez cliquer sur le triangle vert.
+Si vous débutez en R je vous conseille de lire les deux tutoriels très bien faits suivants avant de vous lancer dans celui-ci afin de bien comprendre la logique générale de R :
+- celui de Julien Barnier (https://juba.github.io/tidyverse/index.html), notamment les chapitres I et II qui expliquent toute la prise en main du logiciel.
+- celui de Joseph Larmarange : https://larmarange.github.io/analyse-R/.
+
+# Accéder à Europresse et rechercher des articles
+
+La plateforme Europresse met à disposition les contenus de centaines de sources documentaires. Il s’agit principalement de médias (presse, radio, télé et online) mais aussi d’autres types de sources (rapports, réseaux sociaux, biographies).
+
+L’accès est en général possible pour les étudiant•es et enseignants-chercheur•es à partir des licences universitaires. Le plus simple est donc d’accéder à la plateforme via le répertoire des ressources numériques sur les sites des bibliothèques universitaires (qui exigent une identification).
+
+La plateforme permet par défaut une recherche en mode « étudiant » (voir le menu en haut à droite). Ce mode de consultation des données est intéressant dans une perspective documentaire (pour s’informer sur un sujet) mais il ne permet pas une recherche fine ni la sauvegarde des données dans un format exploitable (les articles ne peuvent être exportés qu’en PDF, un format pratique pour l’affichage à l’écran et l’impression mais duquel il est très difficile d’extraire le texte).
+
+Pour paramétrer sa recherche efficacement et ensuite obtenir les résultats dans un format exploitable (le HTML) il est nécessaire de changer de mode de consultation :
+
+- Dans le menu en haut à droite passer en « Version classique » à la place de « Etudiant »
+- Cliquer sur « Recherche simple » dans le menu en haut à gauche
+- Cliquer ensuite sur « Recherche avancée » dans ce même menu (admirez au passage la logique de l’interface…)
+
+Vous pouvez alors faire une recherche assez fine en définissant :
+
+- Une équation de recherche utilisant les opérateurs & (ET), | (OU), les parenthèses et les guillemets (entre autres). Le choix de cette équation de recherche est évidemment crucial. Il est nécessaire a) de l’ajuster au mieux à la question de recherche et b) de trouver le bon équilibre entre la spécificité des mots-clé utilisés (pour éviter d’afficher trop d’articles hors du champ de la recherche) et leur généralité (qui permet d’avoir des corpus de grande taille). Il vaut en général mieux viser un peu large et réduire ensuite dans la phase de traitement des données (par exemple en supprimant les articles qui contiennent certains mots clé)
+- La liste des sources à explorer (des présélections existent par types de source mais il est possible de composer la liste à sa guise). Attention : Europresse indexe de très nombreuses sources mais leur qualité n’est pas homogène. Certaines sources sont mentionnées comme « irrégulières ». Enfin il est nécessaire de distinguer les articles d’un média et ceux publiés sur son site en ligne.
+- La période à prendre en considération (utiliser une définition fine avec une date de départ et une date de fin).
+
+La plateforme indique alors le nombre d’articles trouvés, quelques statistiques de base et permet d'explorer les articles dans la fenêtre de gauche.
+
+# Collecter les articles au format HTML
+
+Une fois ces articles affichés on désire les sauvegarder dans un format qui permettra d’en extraire facilement le texte et les méta-données. C’est là que les choses deviennent plus compliquées.
+
+En haut à gauche de la liste des articles trouvés figure une boîte à cocher qui permet de sélectionner tous les articles (on peut aussi les sélectionner un par un) mais lorsqu’on la coche la platefrome ne sélectionne que les 50 premiers articles. Il faut scroller jusqu’en bas de la liste pour que celle-ci se prolonge. Par ailleurs la liste s’arrête au 1000ème article.
+
+Il faut donc procéder par paquet de 1000 articles et en scrollant manuellement la fenêtre d’affichage des résultats :
+
+- Afficher les résultats par ordre chronologique croissant et pas par pertinence. L’ordre chronologique croissant est le seul qui permet de collecter les données de manière méthodique.
+- Scroller (20 fois…) jusqu’à atteindre la limite de 1000 articles
+- Cocher la boîte en haut à gauche
+- Cliquer sur « Sauvegarder » (l’icône de disquette)
+- Choisir le format HTML et la sauvegarde dans un fichier, valider
+- Dans la boîte de dialogue suivante suivez le lien qui permet de télécharger le fichier HTML
+- Enregistrer ce fichier dans un dossier sur son disque dur en lui donnant un nom simple et un numero (par exemple "moncorpus_1.HTML")
+- Revenir sur Europresse et cliquer sur « recherche avancée » afin de retrouver la page de sélection des paramètres de recherche.
+- Relancer une recherche en modifiant la date de départ pour la fixer au jour du dernier article enregistré dans le fichier précédant (les autres paramètres sont inchangés)
+
+L’opération doit être répétée autant de fois que nécessaire.
+
+Remarques :
+
+- le serveur peut être un peu lent : accéder plutôt hors des horaires de consultation intensive des étudiant•es et enseignant-chercheur•es;
+- attention aux erreurs d’inattention possibles du fait du caractère très répétitif des opérations (choix des dates, nommage des fichiers…)
+- la méthode génére des doublons sur les dates charnières entre paquets de 1000 articles. Ils devront être supprimés ensuite
+- vous pouvez évidemment sélectionner les articles qui vous intéressent dès la consultation d’Europresse en cochant uniquement ceux-ci. Mais le temps de constitution du corpus va alors exploser et vous vous exposez à devoir justifier ces choix « à la main ». Il vaut donc mieux réfléchir à une équation de recherche assez spécifique pour que vous collectiez tous les articles renvoyés par la plateforme, quitte à nettoyer ensuite dans la phase d’analyse.
+
+# Convertir les données HTML en dataframe
+
+Pour pouvoir analyser les articles de façon systématique il va falloir transformer les fichiers HTML de telle sorte que chaque article soit une ligne dans un tableau de données (« data frame ») dont les colonnes sont les variables qui caractérisent cet article (source, date, auteur, texte…).
+
+Charger les bibliothèques (ou paquets) utiles dans l’environnement de travail (remarque : ces bibliothèques doivent au préalable avoir été installées dans R, cf. les deux tutoriels cités plus haut pour la démarche, notamment le 2.5 de Julien Barnier) :
+
+```{r}
+library(tidyverse) # bibliothèque généraliste (dplyr, ggplot2, tidyr, readr, purr, tibble, stringr, forcats)
+library(XML) # scraping du html
+library(stringr) # text mining
+library(stringdist) # text mining
+library(stringi) # text mining
+library(lubridate) # gestion des dates
+```
+
+Charger une fonction qui permet de lire les HTML qu’on a obtenus sur Europresse (le script R proposé ici pour le faire est largement tiré de celui écrit par Corentin Roquebert https://quanti.hypotheses.org/1416). La fonction s’appelle LIRE, mais vous pouvez bien sûr la renommer à votre guise.
+
+```{r}
+LIRE <- function(html) {
+  doc <- htmlParse(html)  # Parse the document
+  articles <- getNodeSet(doc, "//article")  # Get each article
+
+  # Journal extraction with a check for missing data
+  journal <- sapply(articles, function(art) {
+    journ <- xpathSApply(art, ".//span[@class='DocPublicationName']//text()", xmlValue)
+    if (length(journ) == 0) {
+      NA  # Return NA if no journal name is found
+    } else {
+      journ[[1]]
+    }
+  })
+
+  # Author extraction with a check for missing data
+  auteur <- sapply(articles, function(art) {
+    aut <- xpathSApply(art, ".//p[@class='sm-margin-bottomNews']/text()", xmlValue)
+    if (length(aut) == 0) {
+      NA  # Return NA if no author is found
+    } else {
+      aut[[1]]
+    }
+  })
+
+  # Title extraction with a check for missing data
+  titre <- sapply(articles, function(art) {
+    tmp <- xpathSApply(art, ".//p[contains(@class, 'rdp__articletitle')]//text()", xmlValue)
+    if (length(tmp) == 0) {
+      NA  # Return NA if no title is found
+    } else {
+      paste(tmp, collapse = "")
+    }
+  })
+
+  # Date extraction with a check for missing data
+  date <- sapply(articles, function(art) {
+    tmp <- xpathSApply(art, ".//div[@class='publiC-lblNodoc']//text()", xmlValue)
+    if (length(tmp) == 0) {
+      NA  # Return NA if no date is found
+    } else {
+      substr(tmp, 6, 13)
+    }
+  })
+  date <- as.Date(date, "%Y%m%d")  # Format the date
+
+  # Text extraction with a check for missing data
+  texte <- sapply(articles, function(art) {
+    tmp <- xpathSApply(art, ".//div[@class='DocText clearfix']//text()", xmlValue)
+    if (length(tmp) == 0) {
+      NA  # Return NA if no text is found
+    } else {
+      paste(tmp, collapse = "")
+    }
+  })
+
+  # Compile the data into a data frame
+  txt <- data.frame(Journal = journal,
+                    Titre = titre,
+                    Date = date,
+                    Auteur = auteur,
+                    Texte = texte,
+                    stringsAsFactors = FALSE)
+
+  # Remove rows with missing Journal or Titre values
+  txt <- subset(txt, !is.na(Journal) & !is.na(Titre))
+
+  txt
+}
+
+```
+
+On a donc maintenant une fonction qui permet d’obtenir les informations sur les pages HTML structurées comme celles qu’on a téléchargées sur Europresse. Plutôt que de faire passer manuellement cette fonction sur toutes les pages HTML, on définit une deuxième fonction qui va être appliquée sur tous les fichiers HTML d’un dossier de notre ordinateur. Cette fonction s’appelle lire_dossier :
+
+```{r}
+lire_dossier <- function(chemin) {
+
+  list<-list.files(chemin, pattern= ".HTML", full.names=TRUE, recursive=TRUE)
+
+  l <- lapply(list, function(file) {
+    print(file)
+    LIRE(html=file)
+  })
+  bind_rows(l)
+  
+}
+```
+
+Cette fonction va donc appliquer la fonction LIRE qui transforme les HTML en base de données sur tous les documents qui ont une extension .HTML dans un dossier déterminé. Cela tombe bien puisque l'on on a mis tous nos documents dans un même dossier. On n’a donc qu’à appliquer cette fonction à ce dossier puis créer un .csv dans ce dossier afin de sauvegarder le data frame.
+
+```{r}
+df <- lire_dossier("/Users/basting/Downloads")
+```
+
+```{r}
+df$Texte[1]
+```
+
+On peut d'ores-et-déjà faire une sauvegarde en .csv de ce dataframe :
+
+```{r}
+write.csv2(df, file="nom_fichier(avec_chemin_acces)", row.names = FALSE)
+```
+
+À partir de maintenant on pourra repartir directement du fichier de données avec la fonction suivante :
+
+```{r}
+# df <- read_csv2("nom_fichier(avec_chemin_acces)")
+```
+
+# Nettoyage des données
+
+## Supprimer les doublons d’articles
+
+On commence par supprimer d'éventuels doublons qui peuvent être liés à la méthode de collecte (voir plus haut) :
+
+```{r}
+df <- distinct(df)
+```
+
+RQ : Corentin Roquebert propose une méthode alternative permettant de repérer les quasi-doublons (certains articles sont publiés à plusieurs reprise par un média mais avec de petites variations ou sont des reprises quasi à l’identique de dépêches AFP…) Utile surtout si on travaille avec des données du Web (articles mis à jour -> quasi-doublons) et de la PQR (dépêches AFP) ET si sa question de recherche ne prend pas en compte la question de la réception (l’audience est bien exposée deux fois au contenu !)
+
+Il s’agit maintenant de nettoyer ce corpus, en commençant par les variables associées à chaque article :
+
+- La date est normalement déjà dans le bon format (sinon, il faut faire une petite manipulation avec le paquet lubridate).
+- Le journal, en revanche, est assez mal référencé, ou plutôt, pour un même journal, il n’est pas toujours écrit de la même manière (pour certains comme Le Figaro le numéro du journal est inclus dans le titre).
+- Le texte contient des balises et autres éléments de mise en forme à supprimer
+
+### 4.2. Nettoyage du Titre de la source
+
+On observe que la variable Journal est assez sale :
+
+```{r}
+## On fait un tri à plat de la variable Journal
+df %>% count(Journal) %>% arrange(desc(n))
+```
+
+On recode :
+
+```{r}
+df$Journal_clean <- NULL
+df$Journal_clean[stri_detect_fixed(df$Journal, "figaro", case_insensitive=T)] <- "Le Figaro"
+df$Journal_clean[stri_detect_fixed(df$Journal, "libération", case_insensitive=T)] <- "Libération"
+df$Journal_clean[stri_detect_fixed(df$Journal, "monde", case_insensitive=T)] <- "Le Monde"
+df$Journal_clean[stri_detect_fixed(df$Journal, "humanité", case_insensitive=T)] <- "L'Humanité"
+df$Journal_clean[stri_detect_fixed(df$Journal, "croix", case_insensitive=T)] <- "La Croix"
+df$Journal_clean[stri_detect_fixed(df$Journal, "aujourd'hui", case_insensitive=T)] <- "Aujourd'hui en France"
+df$Journal_clean[stri_detect_fixed(df$Journal, "ouest", case_insensitive=T)] <- "Sud Ouest"
+df %>% count(Journal_clean) %>% arrange(desc(n))
+```
+
+###  4.3. Nettoyage de la variable Texte
+
+Cette étape permet de nettoyer un peu le texte des articles qui est parfois assez sale. Elle n'est pas obligatoire. Le mieux est de faire une première lecture sur le data frame et de juger si elle est nécessaire.
+
+#### 4.3.1. On enlève tout ce qui est entre balise (des balises html peuvent être resté dans le texte)
+
+```{r}
+df$Texte<- gsub ("", "", df$Texte)
+df$Titre<- gsub ("", "", df$Titre)
+```
+
+#### 4.3.2. On enlève les adresses mails (souvent situés en début ou en fin d'article)
+
+```{r}
+df$Texte<- gsub (" [^ ]*@.[^ ]* ", " ", df$Texte)
+df$Titre<- gsub (" [^ ]*@.[^ ]* ", " ", df$Titre)
+```
+
+#### 4.3.3. On supprime les mention "mis à jour le ..." qui figurent souvent dans le texte
+
+```{r}
+df$Texte<- gsub(".is à jour le .{20}[^ ]* ", "", df$Texte) # On enlève dès qu'il est question de "mis à jour le" et les 20 caractères qui suivent jusqu'au prochain espace.
+df$Texte<- gsub("propos recueillis par .{20}[^ ]* ", "", df$Texte) # On enlève dès qu'il est question de "propos recueillis par" et les 20 caractères qui suivent jusqu'au prochain espace.
+```
+
+#### 4.3.4. Autres nettoyages possibles
+
+Le cas échéant, on enlève les étoiles, qui peuvent poser problème à Iramuteq (plus que les autres caractères spéciaux)
+ 
+```{r}
+df$Texte<-gsub("\\*", "", df$Texte)
+```
+
+### 4.4. Création d'un identifiant pour chaque article
+
+```{r}
+## On crée une variable identifiant unique pour chaque article (sera utile pour l'exploitation du data frame)
+df <- df %>%
+  arrange(Date) %>%
+  mutate(ID_Article = row_number())
+```
+
+## Longueur des articles (optionnel)
+
+```{r}
+## On crée une variable longueur de l'article
+df <- df %>%
+  mutate(Length_Article = nchar(Texte))
+```
+
+```{r}
+df %>% group_by(Journal_clean) %>% summarise(longmoy = mean(Length_Article))
+```
+
+## Variables de date (optionnel)
+
+Par défaut la date est au format YYYY-MM-DD.
+On peut avoir besoin de dates un peu plus agrégées pour représenter l'évolution du corpus par année, par mois…
+
+On commence par une variable Annee :
+
+```{r, message = FALSE, warning = FALSE}
+## On crée une variable Année
+df <- df %>%
+  mutate(Annee = year(Date))
+```
+
+Puis on crée une variable Mois :
+
+```{r, message = FALSE, warning = FALSE}
+## On crée une variable Mois
+df <- df %>% mutate(Mois = str_sub(Date, 6, 7))
+```
+
+On crée une variable Annee-Mois
+
+```{r, message = FALSE, warning = FALSE}
+## On crée une variable Année-Mois
+df <- df %>%
+  mutate(YM = paste(Annee, Mois, sep = "-"))
+```
+
+## Suppression d'articles marginaux
+
+On peut vouloir supprimer systématiquement certains articles.
+Voici le code utile dans les cas les plus fréquents :
+
+```{r}
+# Supprimer les articles contenant "pomme" ou "poire" :
+df <- df %>% filter(!str_detect(Texte,"pomme|poire") == TRUE)
+# Supprimer les articles commençant par "Pomme" ou "Poire"
+df <- df %>% filter(!str_detect(Texte,"^Pomme|^Poire") == TRUE)
+# Supprimer les articles de plus de 30.000 caractères :
+df <- df %>% filter(nchar(Texte) < 30000)
+# Supprimer les articles antérieurs au 1er janvier 1990 :
+df <- df %>% filter(Date >= "1990-01-01")
+```
+
+# Exploration élémentaire du corpus
+
+On vérifie la distribution du corpus dans le temps :
+
+```{r, message = FALSE, warning = FALSE}
+df %>% count(year(Date))
+```
+
+```{r, message = FALSE, warning = FALSE}
+df %>% count(Date) %>% arrange(desc(n))
+```
+
+On la représente :
+
+```{r, message = FALSE, warning = FALSE}
+df %>%
+#  filter(Date >= "1990-01-01") %>%
+  ggplot(aes(Date)) +  
+      geom_histogram(binwidth = 0.5) +   
+      scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") +  
+      xlab("Jours") +
+      ylab("Nombre d'articles") +
+  theme_bw()
+```
+
+On fait la même chose mais par source :
+
+```{r}
+
+articles.jour <- df %>% group_by(Date) %>% summarise(n=n())
+plot <- ggplot(articles.jour, aes(x=Date, y=n)) +
+      geom_line() + 
+      scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") +
+      xlab("Nombre d'articles par jour")
+plot
+```
+
+```{r}
+## Une meilleure représentation avec un histogram au lieu d'une courbe
+df %>% ggplot(aes(x=Date)) +
+      geom_histogram(binwidth=0.5) + 
+      scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") +
+      xlab("Nombre d'articles par jour")
+```
+
+```{r}
+## Une autre dans laquelle on fait un histogram "à facettes" pour chaque journal
+df %>%
+  filter(!is.na(Journal_clean)) %>%
+  ggplot(aes(x = Date)) +
+  geom_histogram(binwidth=0.5) +
+ # scale_x_date(labels = date_format("%b")) +
+  ylab("Number of daily articles") +
+  xlab("Year") +
+  theme_bw(base_size = 8) +
+  facet_wrap(Journal_clean ~ ., ncol=1)
+```
+
+On vérifie la distribution de la variable de longueur des articles :
+
+```{r}
+df %>% ggplot(aes(x = Length_Article)) + geom_freqpoly(bins = 100) + theme_bw()
+```
+
+
+# 6. Conclusion
+
+À ce stade, vous disposez maintenant d’une base de données (un df ou dataframe en langage R) propre et facilement utilisable pour faire du text mining sur les contenus des articles ou tout autre type de traitement statistique (voir le tuto text mining).
+La collecte des données sur Europresse est un peu laborieuse du fait de la nécessité de scroller les listes de résultats mais cela n’est pas non plus rédhibitoire. Avec un peu d’entraînement on peut en effet collecter les fichiers HTML de 1000 articles en moins de 5 mn, ce qui fait 12.000 à l’heure… En revanche attention aux erreurs de manipulation possible à plusieurs étapes.
+
+
+
+Cherchons des occurrences de mots caractéristiques de ces paniques.
+
+```{r}
+sum(str_count(df$Texte, "victoire"))
+sum(str_count(df$Texte, "défaite"))
+```
+
+On va créer des variables qui comptent ces occurrences par ligne pour pouvoir ensuite mesurer des moyennes selon les modalités de différentes variables.
+
+```{r}
+df %>%
+  mutate(victoire = str_count(df$Texte, "victoire"),
+         defaite = str_count(df$Texte, "défaite")) %>%
+  summarise(vic = mean(victoire),
+            def = mean(defaite))
+```
+
+```{r}
+df %>%
+  mutate(victoire = str_count(df$Texte, "victoire"),
+         defaite = str_count(df$Texte, "défaite")) %>%
+  group_by(Journal_clean) %>%
+  summarise(vic = mean(victoire),
+            def = mean(defaite))
+```
+
+On peut faire mieux en passant en fréquence de mots pour éviter que la longueur des articles biaise le résultat. On calcule en occurrences pour 1000 mots.
+
+```{r}
+df %>%
+  mutate(victoire = str_count(df$Texte, "victoire")/Length_Article*1000,
+         defaite = str_count(df$Texte, "défaite")/Length_Article*1000) %>%
+  group_by(Journal_clean) %>%
+  summarise(vic = mean(victoire),
+            def = mean(defaite))
+```
+
+La limite de cette approche est évidente : a) on ne cherche qu'un mot ; b) on doit connaître ce mot.
+
+On peut repousser un peu cette limite en cherchant des champs lexicaux définis par des listes de mots. Une remarque : ChatGPT est un expert de la langue : ne pas hésiter à lui demander de produire ce genre de listes.
+
+```{r}
+mots_remplacement <- "licenciement|licencié|chomâge|chômeur|licenciements|licenciée|chômeuse|chômeurs|emploi|travail"
+mots_formation <- "examen|examens|triche|fraude|université|universités|plagiat"
+```
+
+On calcule les occurrences :
+
+```{r}
+df %>%
+  mutate(remplacement = str_count(Texte, mots_remplacement),
+         formation = str_count(Texte, mots_formation)) %>%
+  summarise(rempl = sum(remplacement),
+            form = sum(formation))
+```
+
+Et les fréquences :
+
+```{r}
+df %>%
+  mutate(remplacement = str_count(Texte, mots_remplacement)/Length_Article*1000,
+         formation = str_count(Texte, mots_formation)/Length_Article*1000) %>%
+  summarise(rempl = mean(remplacement, na.rm = T),
+            form = mean(formation, na.rm = T))
+```
+
+On peut ventiler en fonction du journal :
+
+```{r}
+df %>%
+  mutate(remplacement = str_count(Texte, mots_remplacement),
+         formation = str_count(Texte, mots_formation)) %>%
+  group_by(Journal) %>%
+  summarise(rempl = sum(remplacement),
+            form = sum(formation))
+```
+
+La même chose mais par année-mois avec une courbe :
+
+```{r}
+df %>%
+  mutate(remplacement = str_count(Texte, mots_remplacement),
+         formation = str_count(Texte, mots_formation)) %>%
+  group_by(YM) %>%
+  summarise(rempl = sum(remplacement),
+            form = sum(formation)) %>%
+  gather(Termes, Value, -c(YM)) %>%
+  ggplot(aes(x = YM, y = Value, fill = Termes, group=Termes, color=Termes)) +
+  geom_line() +
+  labs(x = "Temps",
+       y = "Fréquence",
+       title = "Un beau titre",
+       subtitle = "Un beau sous-titre") +
+  theme_bw(base_size = 8)
+```
