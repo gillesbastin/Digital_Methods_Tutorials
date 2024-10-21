@@ -187,7 +187,7 @@ LIRE_DOSSIER <- function(chemin) {
 Cette fonction va donc appliquer la fonction LIRE qui transforme les HTML en base de données sur tous les documents qui ont une extension .HTML dans un dossier déterminé. Cela tombe bien puisque l'on on a mis tous nos documents dans un même dossier. On n’a donc qu’à appliquer cette fonction à ce dossier.
 
 ```{r}
-df <- LIRE_DOSSIER("/Users/basting/Nextcloud/ENSEIGNEMENT/Digital Methods/Digital_Methods_Tutorials/data/Europresse_deputes")
+df <- LIRE_DOSSIER("data/Europresse_deputes")
 ```
 En cliquant sur df dans l'environnement de travail, on peut visualiser le dataframe dans son ensemble (mais avec des textes tronqués). On peut visualiser le texte complet du premier article de la manière suivante :
 
@@ -338,20 +338,22 @@ Avant d'analyser vraiment le contenu de ce corpus, on peut en représenter les c
 
 ## 6.1. Distribution du corpus dans le temps
 
-Europresse fournit un timeline un peu limité. Voyons ce que nous pouvons faire avec quelques lignes de code en R.
+Europresse fournit un timeline un peu limité.
 
 ![Caption for the picture.](images/Europresse_deputés_timeline.jpg)
 
+Voyons ce que nous pouvons faire avec quelques lignes de code en R :
+
+Sous la forme d'un tableau des dates par ordre décroissant de nombre d'articles publiés :
 
 ```{r, message = FALSE, warning = FALSE}
 df %>% count(Date) %>% arrange(desc(n))
 ```
 
-On la représente :
+On la représente comme un histogramme :
 
 ```{r, message = FALSE, warning = FALSE}
 df %>%
-#  filter(Date >= "1990-01-01") %>%
   ggplot(aes(Date)) +  
       geom_histogram(binwidth = 0.25) +   
       scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") +
@@ -363,10 +365,9 @@ df %>%
   theme_bw()
 ```
 
-On fait la même chose mais avec une courbe au lieu de l'histogramme :
+On fait la même chose mais avec une courbe au lieu de l'histogramme (pas très recommandé du fait de l'extrapolation linéaire suggérée par la ligne) :
 
 ```{r}
-
 articles.jour <- df %>% group_by(Date) %>% summarise(n=n())
 plot <- ggplot(articles.jour, aes(x=Date, y=n)) +
       geom_line() + 
@@ -379,10 +380,9 @@ plot <- ggplot(articles.jour, aes(x=Date, y=n)) +
 plot
 ```
 
-
+Mais on peut aller plus loin en représentant cet histogramme pour chaque source :
 
 ```{r}
-## Une autre dans laquelle on fait un histogram "à facettes" pour chaque journal
 df %>%
   filter(!is.na(Journal_clean)) %>%
   ggplot(aes(x = Date)) +
@@ -394,12 +394,61 @@ df %>%
   facet_wrap(Journal_clean ~ ., ncol=1)
 ```
 
-On vérifie la distribution de la variable de longueur des articles :
+## 6.2. Auteurs fréquents
 
 ```{r}
-df %>% ggplot(aes(x = Length_Article)) + geom_freqpoly(bins = 100) + theme_bw()
+df %>% count(Auteur) %>% arrange(desc(n))
 ```
 
+Sous la forme d'un histogramme horizontal :
+
+```{r}
+df %>%
+  filter(!is.na(Auteur)) %>%
+  count(Auteur) %>%
+  arrange(desc(n)) %>%
+  head(10) %>%
+ggplot(aes(x = reorder(Auteur, n), y = n)) +  # Reorder for better visualization
+    geom_bar(stat = "identity") +  # Use geom_bar for categorical data
+    coord_flip() +
+    labs(title = "L'évolution de la couverture des députés dans la presse quotidienne nationale",
+         subtitle = "Une approche purement quantitative",
+         x = "Auteurs",
+         y = "Nombre d'articles",
+         caption = "Données collectées sur Europresse le…") +
+    theme_bw()
+```
+
+## 6.3. Sources fréquentes
+
+```{r}
+df %>% count(Journal_clean) %>% arrange(desc(n))
+```
+
+Sous la forme d'un histogramme horizontal :
+
+```{r}
+df %>%
+  filter(!is.na(Journal_clean)) %>%
+  count(Journal_clean) %>%
+  arrange(desc(n)) %>%
+  head(10) %>%
+ggplot(aes(x = reorder(Journal_clean, n), y = n)) +  # Reorder for better visualization
+    geom_bar(stat = "identity") +  # Use geom_bar for categorical data
+    coord_flip() +
+    labs(title = "L'évolution de la couverture des députés dans la presse quotidienne nationale",
+         subtitle = "Une approche purement quantitative",
+         x = "Auteurs",
+         y = "Nombre d'articles",
+         caption = "Données collectées sur Europresse le…") +
+    theme_bw()
+```
+
+## 6.4. Mots-clé
+
+Pour trouver les mots les plus fréquents dans la variable Texte nous avons besoin d'abord de passer par une étape nouvelle de traitement des données : la tokénisation.
+
+Voir le tutoriel "Text_Mining_Europresse"
 
 # 7. Conclusion
 
@@ -407,108 +456,10 @@ df %>% ggplot(aes(x = Length_Article)) + geom_freqpoly(bins = 100) + theme_bw()
 
 La collecte des données sur Europresse est un peu laborieuse du fait de la nécessité de scroller les listes de résultats mais cela n’est pas non plus rédhibitoire. Avec un peu d’entraînement on peut en effet collecter les fichiers HTML de 1000 articles en moins de 5 mn, ce qui fait 12.000 à l’heure… En revanche : attention aux erreurs de manipulation possible à plusieurs étapes.
 
-
-
-Cherchons des occurrences de mots caractéristiques de ces paniques.
+Vous pouvez si vous le souhaitez sauvegarder le dataframe pour pouvoir le réutiliser plus rapidement dans d'autres scripts, sans avoir à refaire le parsing du HTML qui est un peu long :
 
 ```{r}
-sum(str_count(df$Texte, "victoire"))
-sum(str_count(df$Texte, "défaite"))
-```
-
-On va créer des variables qui comptent ces occurrences par ligne pour pouvoir ensuite mesurer des moyennes selon les modalités de différentes variables.
-
-```{r}
-df %>%
-  mutate(victoire = str_count(df$Texte, "victoire"),
-         defaite = str_count(df$Texte, "défaite")) %>%
-  summarise(vic = mean(victoire),
-            def = mean(defaite))
-```
-
-```{r}
-df %>%
-  mutate(victoire = str_count(df$Texte, "victoire"),
-         defaite = str_count(df$Texte, "défaite")) %>%
-  group_by(Journal_clean) %>%
-  summarise(vic = mean(victoire),
-            def = mean(defaite))
-```
-
-On peut faire mieux en passant en fréquence de mots pour éviter que la longueur des articles biaise le résultat. On calcule en occurrences pour 1000 mots.
-
-```{r}
-df %>%
-  mutate(victoire = str_count(df$Texte, "victoire")/Length_Article*1000,
-         defaite = str_count(df$Texte, "défaite")/Length_Article*1000) %>%
-  group_by(Journal_clean) %>%
-  summarise(vic = mean(victoire),
-            def = mean(defaite))
-```
-
-La limite de cette approche est évidente : a) on ne cherche qu'un mot ; b) on doit connaître ce mot.
-
-On peut repousser un peu cette limite en cherchant des champs lexicaux définis par des listes de mots. Une remarque : ChatGPT est un expert de la langue : ne pas hésiter à lui demander de produire ce genre de listes.
-
-```{r}
-mots_remplacement <- "licenciement|licencié|chomâge|chômeur|licenciements|licenciée|chômeuse|chômeurs|emploi|travail"
-mots_formation <- "examen|examens|triche|fraude|université|universités|plagiat"
-```
-
-On calcule les occurrences :
-
-```{r}
-df %>%
-  mutate(remplacement = str_count(Texte, mots_remplacement),
-         formation = str_count(Texte, mots_formation)) %>%
-  summarise(rempl = sum(remplacement),
-            form = sum(formation))
-```
-
-Et les fréquences :
-
-```{r}
-df %>%
-  mutate(remplacement = str_count(Texte, mots_remplacement)/Length_Article*1000,
-         formation = str_count(Texte, mots_formation)/Length_Article*1000) %>%
-  summarise(rempl = mean(remplacement, na.rm = T),
-            form = mean(formation, na.rm = T))
-```
-
-On peut ventiler en fonction du journal :
-
-```{r}
-df %>%
-  mutate(remplacement = str_count(Texte, mots_remplacement),
-         formation = str_count(Texte, mots_formation)) %>%
-  group_by(Journal) %>%
-  summarise(rempl = sum(remplacement),
-            form = sum(formation))
-```
-
-La même chose mais par année-mois avec une courbe :
-
-```{r}
-df %>%
-  mutate(remplacement = str_count(Texte, mots_remplacement),
-         formation = str_count(Texte, mots_formation)) %>%
-  group_by(YM) %>%
-  summarise(rempl = sum(remplacement),
-            form = sum(formation)) %>%
-  gather(Termes, Value, -c(YM)) %>%
-  ggplot(aes(x = YM, y = Value, fill = Termes, group=Termes, color=Termes)) +
-  geom_line() +
-  labs(x = "Temps",
-       y = "Fréquence",
-       title = "Un beau titre",
-       subtitle = "Un beau sous-titre") +
-  theme_bw(base_size = 8)
-```
-
-On peut d'ores-et-déjà faire une sauvegarde en .csv de ce dataframe :
-
-```{r}
-write.csv2(df, file="nom_fichier(avec_chemin_acces)", row.names = FALSE)
+write.csv2(df, file="nom_fichier(avec_chemin_acces)", row.names = FALSE) # sauvegarde en csv
 ```
 
 À partir de maintenant on pourra repartir directement du fichier de données avec la fonction suivante :
