@@ -85,9 +85,7 @@ Pour cela nous allons commencer à utiliser vraiment R en chargeant des biblioth
 library(tidyverse) # bibliothèque généraliste (dplyr, ggplot2, tidyr, readr, purr, tibble, stringr, forcats)
 library(XML) # scraping du html
 library(stringr) # text mining
-#library(stringdist) # text mining
 library(stringi) # text mining
-#library(lubridate) # gestion des dates
 ```
 
 ## 4.2. Ecriture d'une fonction pour lire ("parser") le code HTML
@@ -347,7 +345,7 @@ Voyons ce que nous pouvons faire avec quelques lignes de code en R :
 Sous la forme d'un tableau des dates par ordre décroissant de nombre d'articles publiés :
 
 ```{r, message = FALSE, warning = FALSE}
-df %>% count(Date) %>% arrange(desc(n))
+df %>% count(Date) %>% arrange(desc(n)) %>% head(10)
 ```
 
 On la représente comme un histogramme :
@@ -397,7 +395,7 @@ df %>%
 ## 6.2. Auteurs fréquents
 
 ```{r}
-df %>% count(Auteur) %>% arrange(desc(n))
+df %>% count(Auteur) %>% arrange(desc(n)) %>% head(10)
 ```
 
 Sous la forme d'un histogramme horizontal :
