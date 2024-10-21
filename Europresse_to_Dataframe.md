@@ -22,6 +22,17 @@ Gilles Bastin
     source](#52-nettoyage-du-titre-de-la-source)
   - [5.3. Nettoyage de la variable
     Texte](#53-nettoyage-de-la-variable-texte)
+    - [5.3.1. On enlève tout ce qui est entre balise (des balises html
+      peuvent être resté dans le
+      texte)](#531-on-enlève-tout-ce-qui-est-entre-balise-des-balises-html-peuvent-être-resté-dans-le-texte)
+    - [5.3.2. On enlève les adresses mails (souvent situés en début ou
+      en fin
+      d’article)](#532-on-enlève-les-adresses-mails-souvent-situés-en-début-ou-en-fin-darticle)
+    - [5.3.3. On supprime les mention “mis à jour le …” qui figurent
+      souvent dans le
+      texte](#533-on-supprime-les-mention-mis-à-jour-le--qui-figurent-souvent-dans-le-texte)
+    - [5.3.4. Autres nettoyages
+      possibles](#534-autres-nettoyages-possibles)
   - [5.4. Création d’un identifiant unique pour chaque
     article](#54-création-dun-identifiant-unique-pour-chaque-article)
   - [5.6. Longueur des articles
