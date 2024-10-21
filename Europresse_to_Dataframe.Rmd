@@ -2,7 +2,10 @@
 title: "Europresse_to_Dataframe"
 author: "Gilles Bastin"
 date: "2024-10-21"
-output: html_document
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
 ---
 
 # 1. Objectif et prérequis
