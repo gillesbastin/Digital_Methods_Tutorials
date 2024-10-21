@@ -86,7 +86,7 @@ library(tidyverse) # bibliothèque généraliste (dplyr, ggplot2, tidyr, readr, 
 library(XML) # scraping du html
 library(stringr) # text mining
 #library(stringdist) # text mining
-#library(stringi) # text mining
+library(stringi) # text mining
 #library(lubridate) # gestion des dates
 ```
 
@@ -459,7 +459,7 @@ La collecte des données sur Europresse est un peu laborieuse du fait de la néc
 Vous pouvez si vous le souhaitez sauvegarder le dataframe pour pouvoir le réutiliser plus rapidement dans d'autres scripts, sans avoir à refaire le parsing du HTML qui est un peu long :
 
 ```{r}
-write.csv2(df, file="nom_fichier(avec_chemin_acces)", row.names = FALSE) # sauvegarde en csv
+# write.csv2(df, file="nom_fichier(avec_chemin_acces)", row.names = FALSE) # sauvegarde en csv
 ```
 
 À partir de maintenant on pourra repartir directement du fichier de données avec la fonction suivante :
