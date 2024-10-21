@@ -176,23 +176,12 @@ lire_dossier <- function(chemin) {
 Cette fonction va donc appliquer la fonction LIRE qui transforme les HTML en base de données sur tous les documents qui ont une extension .HTML dans un dossier déterminé. Cela tombe bien puisque l'on on a mis tous nos documents dans un même dossier. On n’a donc qu’à appliquer cette fonction à ce dossier puis créer un .csv dans ce dossier afin de sauvegarder le data frame.
 
 ```{r}
-df <- lire_dossier("data/Europresse_deputes")
+df <- lire_dossier("/Users/basting/Nextcloud/ENSEIGNEMENT/Digital Methods/Digital_Methods_Tutorials/data/Europresse_deputes")
 ```
+En cliquant sur df dans l'environnement de travail, on peut visualiser le dataframe dans son ensemble (mais avec des textes tronqués). On peut visualiser le texte complet du premier article de la manière suivante :
 
 ```{r}
 df$Texte[1]
-```
-
-On peut d'ores-et-déjà faire une sauvegarde en .csv de ce dataframe :
-
-```{r}
-write.csv2(df, file="nom_fichier(avec_chemin_acces)", row.names = FALSE)
-```
-
-À partir de maintenant on pourra repartir directement du fichier de données avec la fonction suivante :
-
-```{r}
-# df <- read_csv2("nom_fichier(avec_chemin_acces)")
 ```
 
 # Nettoyage des données
@@ -352,7 +341,7 @@ On la représente :
 df %>%
 #  filter(Date >= "1990-01-01") %>%
   ggplot(aes(Date)) +  
-      geom_histogram(binwidth = 0.5) +   
+      geom_histogram(binwidth = 0.25) +   
       scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") +  
       xlab("Jours") +
       ylab("Nombre d'articles") +
@@ -371,13 +360,7 @@ plot <- ggplot(articles.jour, aes(x=Date, y=n)) +
 plot
 ```
 
-```{r}
-## Une meilleure représentation avec un histogram au lieu d'une courbe
-df %>% ggplot(aes(x=Date)) +
-      geom_histogram(binwidth=0.5) + 
-      scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") +
-      xlab("Nombre d'articles par jour")
-```
+
 
 ```{r}
 ## Une autre dans laquelle on fait un histogram "à facettes" pour chaque journal
@@ -500,4 +483,16 @@ df %>%
        title = "Un beau titre",
        subtitle = "Un beau sous-titre") +
   theme_bw(base_size = 8)
+```
+
+On peut d'ores-et-déjà faire une sauvegarde en .csv de ce dataframe :
+
+```{r}
+write.csv2(df, file="nom_fichier(avec_chemin_acces)", row.names = FALSE)
+```
+
+À partir de maintenant on pourra repartir directement du fichier de données avec la fonction suivante :
+
+```{r}
+# df <- read_csv2("nom_fichier(avec_chemin_acces)")
 ```
